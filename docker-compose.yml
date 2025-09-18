@@ -1,0 +1,66 @@
+services:
+  azuracast_db:
+    image: mariadb:10.6
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-azuracast}
+      - MYSQL_USER=${MYSQL_USER:-azuracast}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:?set-in-dokploy}
+    volumes:
+      - azura-db:/var/lib/mysql
+    restart: unless-stopped
+
+  azuracast_redis:
+    image: redis:7-alpine
+    volumes:
+      - azura-redis:/data
+    restart: unless-stopped
+
+  # Runs the radio engines (Liquidsoap etc.)
+  azuracast_stations:
+    image: ghcr.io/azuracast/azuracast:latest
+    environment:
+      - AZURACAST_DC_ROLE=stations
+    volumes:
+      - azura-stations:/var/azuracast/stations
+      - azura-recordings:/var/azuracast/recordings
+      - azura-backups:/var/azuracast/backups
+    depends_on:
+      - azuracast_db
+      - azuracast_redis
+    # Expose the *station* ports here (not on web).
+    # Start with a small range; you can expand later.
+    ports:
+      - "8000-8010:8000-8010"
+    restart: unless-stopped
+
+  # Web UI, API, SFTP and proxy
+  azuracast_web:
+    image: ghcr.io/azuracast/azuracast:latest
+    environment:
+      - AZURACAST_DC_ROLE=web
+      - AZURACAST_DB_HOST=azuracast_db
+      - AZURACAST_REDIS_HOST=azuracast_redis
+    volumes:
+      - azura-data:/var/azuracast
+      - azura-stations:/var/azuracast/stations
+      - azura-recordings:/var/azuracast/recordings
+      - azura-backups:/var/azuracast/backups
+    depends_on:
+      - azuracast_db
+      - azuracast_redis
+      - azuracast_stations
+    # If 80/443 are busy on your VPS, change to e.g. "8088:80" / "8443:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "2022:2022"   # SFTP uploads
+    restart: unless-stopped
+
+volumes:
+  azura-data:
+  azura-db:
+  azura-redis:
+  azura-stations:
+  azura-recordings:
+  azura-backups:
