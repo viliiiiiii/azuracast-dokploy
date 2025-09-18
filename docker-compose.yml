@@ -7,7 +7,12 @@ services:
       - MYSQL_USER=${MYSQL_USER:-azuracast}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:?set-in-dokploy}
     volumes:
-      - azura-db-v3:/var/lib/mysql
+      - azura-db-v5:/var/lib/mysql   # NEW volume name
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   azuracast_redis:
@@ -68,7 +73,7 @@ services:
 
 volumes:
   azura-data:
-  azura-db-v3:
+  azura-db-v5:     # matches the DB service above
   azura-redis:
   azura-stations:
   azura-recordings:
