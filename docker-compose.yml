@@ -7,7 +7,7 @@ services:
       - MYSQL_USER=${MYSQL_USER:-azuracast}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:?set-in-dokploy}
     volumes:
-      - azura-db:/var/lib/mysql
+      - azura-db-v3:/var/lib/mysql
     restart: unless-stopped
 
   azuracast_redis:
@@ -28,7 +28,6 @@ services:
     depends_on:
       - azuracast_db
       - azuracast_redis
-    # use free HOST ports (change if needed)
     ports:
       - "8200-8210:8000-8010"
     restart: unless-stopped
@@ -40,7 +39,6 @@ services:
       - AZURACAST_DC_ROLE=web
       - AZURACAST_DB_HOST=azuracast_db
       - AZURACAST_REDIS_HOST=azuracast_redis
-      # optional hints so links in UI look right if you remap 80/443
       - AZURACAST_HTTP_PORT=${AZURACAST_HTTP_PORT:-8088}
       - AZURACAST_HTTPS_PORT=${AZURACAST_HTTPS_PORT:-8443}
     volumes:
@@ -52,7 +50,6 @@ services:
       - azuracast_db
       - azuracast_redis
       - azuracast_stations
-    # remap panel + SFTP if 80/443 busy
     ports:
       - "8088:80"
       - "8443:443"
@@ -61,7 +58,7 @@ services:
 
 volumes:
   azura-data:
-  azura-db-v2:
+  azura-db-v3:        # <-- matches the DB service above
   azura-redis:
   azura-stations:
   azura-recordings:
