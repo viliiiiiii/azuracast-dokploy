@@ -61,7 +61,7 @@ services:
 
 volumes:
   azura-data:
-  azura-db:
+  azura-db-v2:
   azura-redis:
   azura-stations:
   azura-recordings:
