@@ -7,12 +7,7 @@ services:
       - MYSQL_USER=${MYSQL_USER:-azuracast}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:?set-in-dokploy}
     volumes:
-      - azura-db-v5:/var/lib/mysql   # NEW volume name
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      - azura-db-v3:/var/lib/mysql
     restart: unless-stopped
 
   azuracast_redis:
@@ -21,17 +16,10 @@ services:
       - azura-redis:/data
     restart: unless-stopped
 
-  # Radio engines (Liquidsoap etc.)
   azuracast_stations:
     image: ghcr.io/azuracast/azuracast:latest
     environment:
       - AZURACAST_DC_ROLE=stations
-      - AZURACAST_DB_HOST=azuracast_db
-      - AZURACAST_DB_PORT=3306
-      - AZURACAST_DB_NAME=${MYSQL_DATABASE:-azuracast}
-      - AZURACAST_DB_USER=${MYSQL_USER:-azuracast}
-      - AZURACAST_DB_PASSWORD=${MYSQL_PASSWORD:?set-in-dokploy}
-      - AZURACAST_REDIS_HOST=azuracast_redis
     volumes:
       - azura-stations:/var/azuracast/stations
       - azura-recordings:/var/azuracast/recordings
@@ -43,18 +31,13 @@ services:
       - "8200-8210:8000-8010"
     restart: unless-stopped
 
-  # Web UI, API, SFTP and reverse proxy
   azuracast_web:
     image: ghcr.io/azuracast/azuracast:latest
     environment:
       - AZURACAST_DC_ROLE=web
       - AZURACAST_DB_HOST=azuracast_db
-      - AZURACAST_DB_PORT=3306
-      - AZURACAST_DB_NAME=${MYSQL_DATABASE:-azuracast}
-      - AZURACAST_DB_USER=${MYSQL_USER:-azuracast}
-      - AZURACAST_DB_PASSWORD=${MYSQL_PASSWORD:?set-in-dokploy}
       - AZURACAST_REDIS_HOST=azuracast_redis
-      - AZURACAST_HTTP_PORT=${AZURACAST_HTTP_PORT:-8088}
+      - AZURACAST_HTTP_PORT=${AZURACAST_HTTP_PORT:-8080}
       - AZURACAST_HTTPS_PORT=${AZURACAST_HTTPS_PORT:-8443}
     volumes:
       - azura-data:/var/azuracast
@@ -66,14 +49,14 @@ services:
       - azuracast_redis
       - azuracast_stations
     ports:
-      - "8088:80"
+      - "8080:80"
       - "8443:443"
       - "2022:2022"
     restart: unless-stopped
 
 volumes:
   azura-data:
-  azura-db-v5:     # matches the DB service above
+  azura-db-v3:
   azura-redis:
   azura-stations:
   azura-recordings:
